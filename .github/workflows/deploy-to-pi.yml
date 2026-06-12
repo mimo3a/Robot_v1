@@ -20,7 +20,7 @@ jobs:
         env:
           PI_SSH_KEY: ${{ secrets.PI_SSH_KEY }}
           PI_HOST: ${{ secrets.PI_HOST }}
-          PI_PORT: ${{ secrets.PI_PORT || '22' }}
+          PI_PORT: ${{ secrets.PI_PORT }}
         run: |
           : "${PI_SSH_KEY:?Missing GitHub secret PI_SSH_KEY}"
           : "${PI_HOST:?Missing GitHub secret PI_HOST}"
@@ -33,8 +33,8 @@ jobs:
         env:
           PI_HOST: ${{ secrets.PI_HOST }}
           PI_USER: ${{ secrets.PI_USER }}
-          PI_PORT: ${{ secrets.PI_PORT || '22' }}
-          PI_DEPLOY_PATH: ${{ secrets.PI_DEPLOY_PATH || '/home/pirobot/robot' }}
+          PI_PORT: ${{ secrets.PI_PORT }}
+          PI_DEPLOY_PATH: ${{ secrets.PI_DEPLOY_PATH }}
         run: |
           : "${PI_USER:?Missing GitHub secret PI_USER}"
           tar \
@@ -51,7 +51,8 @@ jobs:
         env:
           PI_HOST: ${{ secrets.PI_HOST }}
           PI_USER: ${{ secrets.PI_USER }}
-          PI_PORT: ${{ secrets.PI_PORT || '22' }}
+          PI_PORT: ${{ secrets.PI_PORT }}
+          PI_SERVICE_NAME: ${{ secrets.PI_SERVICE_NAME }}
         run: |
           ssh -i ~/.ssh/pi_key -p "$PI_PORT" "$PI_USER@$PI_HOST" \
             "sudo systemctl restart '$PI_SERVICE_NAME'"
