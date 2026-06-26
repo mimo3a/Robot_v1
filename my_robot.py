@@ -18,14 +18,37 @@ left_encoder = Encoder(LEFT_ENCODER_PIN)
 right_encoder = Encoder(RIGHT_ENCODER_PIN)
 
 motors.set_speed(left_pwm, right_pwm)
+try:
+    while True:
+        left_encoder.reset()
+        right_encoder.reset()
 
-while True:
-    left_encoder.reset()
-    right_encoder.reset()
+        time.sleep(0.2)
 
-    time.sleep(0.2)
+        left_count = left_encoder.read()
+        right_count = right_encoder.read()
 
-    left_count = left_encoder.read()
-    right_count = right_encoder.read()
+        error = right_count - left_count
 
-    print("Left:", left_count, "Right:", right_count)
+        if error > 1:
+            left_pwm += 1
+            right_pwm -= 1
+        elif error < -1:
+            left_pwm -= 1
+            right_pwm += 1
+
+    left_pwm = max(20, min(100, left_pwm))
+    right_pwm = max(20, min(100, right_pwm))
+
+    motors.set_speed(left_pwm, right_pwm)
+
+    print(
+            "Left:", left_count,
+            "Right:", right_count,
+            "PWM L:", left_pwm,
+            "PWM R:", right_pwm
+        )
+finally:
+    motors.stop()
+    motors.cleanup()
+    GPIO.cleanup()
