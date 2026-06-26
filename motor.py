@@ -6,6 +6,7 @@ class _SingleMotor:
         self.pin1 = pin1
         self.pin2 = pin2
 
+        # Each motor uses two PWM pins: one for forward and one for reverse.
         GPIO.setup(self.pin1, GPIO.OUT)
         GPIO.setup(self.pin2, GPIO.OUT)
 
@@ -16,10 +17,12 @@ class _SingleMotor:
         self.pwm2.start(0)
 
     def forward(self, speed):
+        # Drive forward by powering only the first H-bridge input.
         self.pwm1.ChangeDutyCycle(speed)
         self.pwm2.ChangeDutyCycle(0)
 
     def backward(self, speed):
+        # Drive backward by powering only the second H-bridge input.
         self.pwm1.ChangeDutyCycle(0)
         self.pwm2.ChangeDutyCycle(speed)
 
@@ -34,6 +37,7 @@ class _SingleMotor:
 
 
 class Motor:
+    # BCM GPIO pins connected to the left and right motor driver inputs.
     LEFT_PINS = (17, 27)
     RIGHT_PINS = (22, 23)
     PWM_FREQ = 1000
@@ -62,5 +66,6 @@ class Motor:
         GPIO.cleanup()
 
     def set_speed(self, left_speed, right_speed):
+        # Independent forward speeds make steering correction possible.
         self.left.forward(left_speed)
         self.right.forward(right_speed)

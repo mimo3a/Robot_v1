@@ -46,6 +46,7 @@ class _SingleHCSR04:
 
 
 class HCSR04:
+    # BCM GPIO pins are stored as (trigger, echo) pairs.
     LEFT_PINS = (5, 6)
     RIGHT_PINS = (13, 19)
 
@@ -70,6 +71,7 @@ class HCSR04:
     def messen(self):
         distances = self.get_distances()
 
+        # Print each reading separately so a timeout on one side is visible.
         if distances["left"] is not None:
             print(f"Left Distance: {distances['left']} cm")
         else:

@@ -10,6 +10,8 @@ RIGHT_ENCODER_PIN = 25
 
 GPIO.setmode(GPIO.BCM)
 
+# Base motor power in percent. The correction value is adjusted at runtime
+# to keep both encoder counts close to each other.
 base_pwm = 60
 correction = 0
 
@@ -21,6 +23,7 @@ try:
     motors.set_speed(base_pwm, base_pwm)
 
     while True:
+        # Measure encoder pulses over a short fixed time window.
         left_encoder.reset()
         right_encoder.reset()
 
@@ -31,11 +34,14 @@ try:
 
         error = left_count - right_count
 
+        # If one wheel reports more pulses, slow that side down and speed the
+        # other side up by changing the shared correction value.
         if error > 1:
             correction -= 1
         elif error < -1:
             correction += 1
 
+        # Limit correction so the robot cannot command extreme PWM differences.
         correction = max(-30, min(30, correction))
 
         left_pwm = base_pwm + correction
@@ -53,6 +59,7 @@ try:
         )
 
 finally:
+    # Always stop motors and release GPIO pins, even when the loop is interrupted.
     motors.stop()
     motors.cleanup()
     GPIO.cleanup()
