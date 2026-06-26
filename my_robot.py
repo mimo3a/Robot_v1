@@ -37,12 +37,12 @@ try:
             left_pwm -= 1
             right_pwm += 1
 
-    left_pwm = max(20, min(100, left_pwm))
-    right_pwm = max(20, min(100, right_pwm))
+        left_pwm = max(20, min(100, left_pwm))
+        right_pwm = max(20, min(100, right_pwm))
 
-    motors.set_speed(left_pwm, right_pwm)
+        motors.set_speed(left_pwm, right_pwm)
 
-    print(
+        print(
             "Left:", left_count,
             "Right:", right_count,
             "PWM L:", left_pwm,
