@@ -13,6 +13,10 @@ GPIO.setmode(GPIO.BCM)
 left_pwm = 60
 right_pwm = 35
 
+motors = Motor()
+left_encoder = Encoder(LEFT_ENCODER_PIN)
+right_encoder = Encoder(RIGHT_ENCODER_PIN)
+
 motors.set_speed(left_pwm, right_pwm)
 
 while True:
