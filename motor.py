@@ -30,6 +30,7 @@ class _SingleMotor:
     def cleanup(self):
         self.pwm1.stop()
         self.pwm2.stop()
+        
 
 
 class Motor:
