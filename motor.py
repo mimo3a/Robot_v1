@@ -60,3 +60,7 @@ class Motor:
         self.left.cleanup()
         self.right.cleanup()
         GPIO.cleanup()
+
+    def set_speed(self, left_speed, right_speed):
+        self.left.forward(left_speed)
+        self.right.forward(right_speed)
