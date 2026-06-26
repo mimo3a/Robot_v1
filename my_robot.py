@@ -10,7 +10,7 @@ RIGHT_ENCODER_PIN = 25
 
 GPIO.setmode(GPIO.BCM)
 
-base_pwm = 70
+base_pwm = 60
 correction = 0
 
 motors = Motor()
@@ -29,12 +29,12 @@ try:
         left_count = left_encoder.read()
         right_count = right_encoder.read()
 
-        error = right_count - left_count
+        error = left_count - right_count
 
         if error > 1:
-            correction += 1
-        elif error < -1:
             correction -= 1
+        elif error < -1:
+            correction += 1
 
         correction = max(-30, min(30, correction))
 
