@@ -10,15 +10,16 @@ RIGHT_ENCODER_PIN = 25
 
 GPIO.setmode(GPIO.BCM)
 
-left_pwm = 70
-right_pwm = 70
+base_pwm = 70
+correction = 0
 
 motors = Motor()
 left_encoder = Encoder(LEFT_ENCODER_PIN)
 right_encoder = Encoder(RIGHT_ENCODER_PIN)
 
-motors.set_speed(left_pwm, right_pwm)
 try:
+    motors.set_speed(base_pwm, base_pwm)
+
     while True:
         left_encoder.reset()
         right_encoder.reset()
@@ -31,23 +32,26 @@ try:
         error = right_count - left_count
 
         if error > 1:
-            left_pwm += 1
-            right_pwm -= 1
+            correction += 1
         elif error < -1:
-            left_pwm -= 1
-            right_pwm += 1
+            correction -= 1
 
-        left_pwm = max(20, min(100, left_pwm))
-        right_pwm = max(20, min(100, right_pwm))
+        correction = max(-30, min(30, correction))
+
+        left_pwm = base_pwm + correction
+        right_pwm = base_pwm - correction
 
         motors.set_speed(left_pwm, right_pwm)
 
         print(
             "Left:", left_count,
             "Right:", right_count,
+            "Error:", error,
+            "Correction:", correction,
             "PWM L:", left_pwm,
             "PWM R:", right_pwm
         )
+
 finally:
     motors.stop()
     motors.cleanup()
