@@ -11,7 +11,7 @@ RIGHT_ENCODER_PIN = 25
 GPIO.setmode(GPIO.BCM)
 
 left_pwm = 70
-right_pwm = 30
+right_pwm = 70
 
 motors = Motor()
 left_encoder = Encoder(LEFT_ENCODER_PIN)
