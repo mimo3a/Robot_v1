@@ -26,7 +26,7 @@ try:
             "Left:", encoder_data["left_count"],
             "Right:", encoder_data["right_count"],
             "Error:", encoder_data["error"],
-            "Correction:", correction,
+            "Correction:", round(correction, 1),
             "PWM L:", encoder_data["left_pwm"],
             "PWM R:", encoder_data["right_pwm"]
         )

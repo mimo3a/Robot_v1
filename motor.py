@@ -77,10 +77,12 @@ class Motor:
         self,
         base_speed,
         correction,
-        trim=5,
+        trim=0,
         measure_time=0.2,
-        # threshold=1,
-        max_correction=30
+        threshold=2,
+        correction_gain=2.0,
+        smoothing=0.35,
+        max_correction=25
     ):
         # Measure encoder pulses over a short fixed time window.
         self.left_encoder.reset()
@@ -92,20 +94,25 @@ class Motor:
         right_count = self.right_encoder.read()
         error = left_count - right_count
 
-        # If one wheel reports more pulses, slow that side down and speed the
-        # other side up by changing the shared correction value.
-        if error > 0:
-            correction -= 1
-        elif error < 0:
-            correction += 1
+        # Encoder counts fluctuate by a few pulses, so ignore small differences.
+        # Use a smoothed target correction instead of accumulating forever.
+        if abs(error) <= threshold:
+            target_correction = 0
+        else:
+            target_correction = -error * correction_gain
+
+        correction += (target_correction - correction) * smoothing
+
+        if abs(correction) < 0.5:
+            correction = 0
 
         # Limit correction so the robot cannot command extreme PWM differences.
         correction = max(-max_correction, min(max_correction, correction))
 
         # Positive trim steers right: more power on the left motor and less on
         # the right motor. Use it to compensate when the robot pulls left.
-        left_pwm = self._clamp_speed(base_speed + trim + correction)
-        right_pwm = self._clamp_speed(base_speed - trim - correction)
+        left_pwm = round(self._clamp_speed(base_speed + trim + correction))
+        right_pwm = round(self._clamp_speed(base_speed - trim - correction))
         self.set_speed_forward(left_pwm, right_pwm)
 
         return {
