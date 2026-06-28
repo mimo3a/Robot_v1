@@ -5,8 +5,13 @@ from motor import Motor
 base_pwm = 60
 correction = 0
 
-# Positive trim steers the robot right. Increase this if it still pulls left;
-# reduce it if the robot starts pulling right.
+# Steering trim calibration:
+# 1. Put the robot on a straight 2-3 m floor line.
+# 2. Run it forward for about 2 seconds.
+# 3. If it drifts left, increase steering_trim by 1-2.
+# 4. If it drifts right, decrease steering_trim by 1-2.
+# Positive trim gives more PWM to the left motor and less to the right motor.
+# Example: base_pwm=60 and steering_trim=5 gives left=65, right=55.
 steering_trim = 5
 
 motors = Motor()
