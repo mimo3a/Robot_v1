@@ -77,7 +77,7 @@ class Motor:
         self,
         base_speed,
         correction,
-        trim=0,
+        trim=5,
         measure_time=0.2,
         # threshold=1,
         max_correction=30
