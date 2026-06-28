@@ -5,13 +5,21 @@ from motor import Motor
 base_pwm = 60
 correction = 0
 
+# Positive trim steers the robot right. Increase this if it still pulls left;
+# reduce it if the robot starts pulling right.
+steering_trim = 5
+
 motors = Motor()
 
 try:
-    motors.set_speed_forward(base_pwm, base_pwm)
+    motors.set_speed_forward(base_pwm + steering_trim, base_pwm - steering_trim)
 
     while True:
-        encoder_data = motors.update_encoder_correction(base_pwm, correction)
+        encoder_data = motors.update_encoder_correction(
+            base_pwm,
+            correction,
+            trim=steering_trim
+        )
         correction = encoder_data["correction"]
 
         print(

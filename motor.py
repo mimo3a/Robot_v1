@@ -65,15 +65,19 @@ class Motor:
         self.right.cleanup()
         GPIO.cleanup()
 
+    def _clamp_speed(self, speed):
+        return max(0, min(100, speed))
+
     def set_speed_forward(self, left_speed, right_speed):
         # Independent forward speeds make steering correction possible.
-        self.left.forward(left_speed)
-        self.right.forward(right_speed)
+        self.left.forward(self._clamp_speed(left_speed))
+        self.right.forward(self._clamp_speed(right_speed))
 
     def update_encoder_correction(
         self,
         base_speed,
         correction,
+        trim=0,
         measure_time=0.2,
         # threshold=1,
         max_correction=30
@@ -98,8 +102,10 @@ class Motor:
         # Limit correction so the robot cannot command extreme PWM differences.
         correction = max(-max_correction, min(max_correction, correction))
 
-        left_pwm = base_speed + correction
-        right_pwm = base_speed - correction
+        # Positive trim steers right: more power on the left motor and less on
+        # the right motor. Use it to compensate when the robot pulls left.
+        left_pwm = self._clamp_speed(base_speed + trim + correction)
+        right_pwm = self._clamp_speed(base_speed - trim - correction)
         self.set_speed_forward(left_pwm, right_pwm)
 
         return {
