@@ -7,7 +7,7 @@ correction = 0
 
 # Positive trim steers the robot right. Increase this if it still pulls left;
 # reduce it if the robot starts pulling right.
-steering_trim = 8
+steering_trim = 5
 
 motors = Motor()
 
@@ -30,6 +30,9 @@ try:
             "PWM L:", encoder_data["left_pwm"],
             "PWM R:", encoder_data["right_pwm"]
         )
+
+except KeyboardInterrupt:
+    print("\nStopped by user.")
 
 finally:
     # Always stop motors and release GPIO pins, even when the loop is interrupted.
