@@ -75,7 +75,7 @@ class Motor:
         base_speed,
         correction,
         measure_time=0.2,
-        threshold=1,
+        # threshold=1,
         max_correction=30
     ):
         # Measure encoder pulses over a short fixed time window.
@@ -90,9 +90,9 @@ class Motor:
 
         # If one wheel reports more pulses, slow that side down and speed the
         # other side up by changing the shared correction value.
-        if error > threshold:
+        if error > 0:
             correction -= 1
-        elif error < -threshold:
+        elif error < 0:
             correction += 1
 
         # Limit correction so the robot cannot command extreme PWM differences.
