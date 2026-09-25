@@ -1,109 +1,247 @@
 # Robot v1 — Autonomous Differential-Drive Robot (Raspberry Pi)
 
-A two-wheeled differential-drive robot controlled by a Raspberry Pi in **Python**.
-This is **version 1** of the project: closed-loop motor control with wheel-encoder
-feedback for straight-line driving, ultrasonic obstacle sensing, and an addressable
-LED strip — all written as clean, reusable hardware-abstraction classes.
+A two-wheeled differential-drive robot controlled by a Raspberry Pi 5 in **Python**.
 
-> **Project status:** ✅ Version 1 complete — tagged [`v1.0`](../../releases/tag/v1.0).
-> Development continues in **[Robot v2](https://github.com/mimo3a/Robot_v2)** — a full
-> redesign on an **STM32F407 (FreeRTOS)** for real-time low-level control plus a
-> **Raspberry Pi (ROS)** for high-level logic.
+The project is a practical robotics prototype for motor control, encoder feedback, ultrasonic obstacle sensing and addressable LEDs. It is also the first stage of a larger architecture that will later move real-time motor control to an STM32.
+
+> **Project status:** 🚧 Work in progress.
+>
+> Current work focuses on finishing the Raspberry Pi prototype, validating obstacle detection and motor behaviour, cleaning the wiring, and preparing final photos/demo material.
 
 ---
 
 ## Highlights
 
-- **Closed-loop straight-line driving.** Both wheels are kept in sync using
-  interrupt-driven encoder feedback, with a smoothed proportional correction,
-  a dead-band to ignore sensor jitter, and clamping to keep PWM commands safe.
-- **Manual steering trim.** A simple, documented calibration constant compensates
-  for mechanical drift on a straight run.
-- **Clean hardware abstraction.** Each peripheral (motors, encoders, ultrasonic
-  sensors, LED strip) is its own self-contained class with a small, obvious API.
-- **Safe shutdown.** Motors always stop and GPIO is always released, even when the
-  program is interrupted.
-- **Continuous integration.** Every push is syntax-checked automatically via
-  GitHub Actions.
+- Two DC motors controlled through GPIO PWM and an H-bridge.
+- Interrupt-driven wheel encoder measurement.
+- Straight-line correction using encoder feedback.
+- Fixed steering trim for compensation of mechanical left/right bias.
+- Two HC-SR04 ultrasonic distance sensors.
+- 12-pixel WS2812 / NeoPixel LED strip via SPI.
+- Safe motor shutdown on program exit.
+- Hardware functionality separated into reusable Python classes.
 
 ## Hardware
 
-| Component            | Details                                              |
-|---------------------|------------------------------------------------------|
-| Controller          | Raspberry Pi (Pi 5 — uses SPI + `pi5neo`)            |
-| Drive               | 2 × DC motors via H-bridge driver (2 PWM pins each)  |
-| Odometry            | 2 × wheel encoders (single-channel, falling edge)    |
-| Distance sensing    | 2 × HC-SR04 ultrasonic sensors (left / right)        |
-| Lighting            | 12 × WS2812 / NeoPixel LED strip (SPI)               |
+| Component | Details |
+|---|---|
+| Controller | Raspberry Pi 5 |
+| Drive | 2 × DC motors via H-bridge |
+| Odometry | 2 × single-channel wheel encoders |
+| Distance sensing | 2 × HC-SR04 ultrasonic sensors |
+| Lighting | 12 × WS2812 / NeoPixel LEDs |
+| Chassis | Differential drive: two driven wheels + rear caster |
 
 ### GPIO pin map (BCM)
 
-| Function               | Pins            |
-|------------------------|-----------------|
-| Left motor (fwd/rev)   | GPIO 17, 27     |
-| Right motor (fwd/rev)  | GPIO 22, 23     |
-| Left encoder           | GPIO 24         |
-| Right encoder          | GPIO 25         |
-| Left HC-SR04 (trig/echo)  | GPIO 5, 6    |
-| Right HC-SR04 (trig/echo) | GPIO 13, 19  |
-| LED strip (SPI MOSI)   | GPIO 10         |
+| Function | Pins |
+|---|---|
+| Left motor (forward/reverse) | GPIO 17, 27 |
+| Right motor (forward/reverse) | GPIO 22, 23 |
+| Left encoder | GPIO 24 |
+| Right encoder | GPIO 25 |
+| Left HC-SR04 (trig/echo) | GPIO 5, 6 |
+| Right HC-SR04 (trig/echo) | GPIO 13, 19 |
+| LED strip (SPI MOSI) | GPIO 10 |
+
+All GPIO numbering uses **BCM** numbering.
 
 ## Project structure
 
-| File           | Responsibility                                                      |
-|----------------|--------------------------------------------------------------------|
-| `my_robot.py`  | Entry point: drives forward, runs the encoder-correction loop, prints live telemetry |
-| `motor.py`     | `Motor` class — dual-motor control, PWM, and the encoder-based straight-line correction |
-| `encoder.py`   | `Encoder` class — interrupt-driven pulse counting                  |
-| `hc_sr04.py`   | `HCSR04` class — dual ultrasonic distance measurement with echo timeouts |
-| `led_band.py`  | NeoPixel LED-strip demo animation                                  |
+| File | Responsibility |
+|---|---|
+| `my_robot.py` | Main control program and live telemetry |
+| `motor.py` | Dual-motor PWM control and encoder-based correction |
+| `encoder.py` | Interrupt-driven encoder pulse counting |
+| `hc_sr04.py` | Ultrasonic distance measurement with timeout handling |
+| `led_band.py` | WS2812 / NeoPixel LED control |
+| `test_hc_sr04.py` | HC-SR04 test program |
 
-## How the straight-line control works
+## Motor control
 
-Both drive wheels rarely turn at exactly the same rate, so the robot drifts.
-On every cycle the controller:
+The current control loop is:
 
-1. resets both encoders and counts pulses over a short fixed time window;
-2. computes the error between left and right counts;
-3. ignores errors inside a small dead-band (encoder noise);
-4. converts the remaining error into a **smoothed** correction (a proportional
-   step toward the target, not an ever-growing accumulator);
-5. clamps the correction and applies it as opposite PWM offsets to the two motors,
-   on top of a manual `steering_trim`.
+`my_robot.py → motor.py → encoder.py`
 
+The robot uses a base PWM value together with two independent corrections:
+
+1. **Steering trim** compensates for a constant mechanical bias between the motors.
+2. **Encoder correction** dynamically compensates for differences in measured wheel speed.
+
+The resulting PWM commands are:
+
+```text
+left_pwm  = base_pwm + steering_trim + correction
+right_pwm = base_pwm - steering_trim - correction
 ```
-left_pwm  = base + trim + correction
-right_pwm = base - trim - correction
+
+PWM output is clamped to the safe range `0..100`.
+
+### Straight-line calibration
+
+A typical calibration currently uses:
+
+```python
+base_pwm = 60
+steering_trim = 5
 ```
 
-This keeps the robot tracking straight while never commanding an extreme
-speed difference between the wheels.
+A positive `steering_trim` increases left-motor PWM and decreases right-motor PWM.
 
-## Getting started
+Calibration is performed on the floor over repeated straight runs:
 
-Requires a Raspberry Pi with the wiring above. The GPIO libraries only run on
-the Pi itself.
+1. Run the robot for approximately 2 seconds on a straight 2–3 m path.
+2. If it drifts left, increase `steering_trim` by about 1–2.
+3. If it drifts right, decrease it by about 1–2.
+4. Repeat several runs and evaluate the physical trajectory.
+
+**Important:** similar encoder counts do not necessarily mean that the robot physically travels straight. Mechanical differences, wheel slip and motor condition can still cause drift. Floor behaviour is therefore used together with encoder telemetry.
+
+## Encoder correction
+
+`Motor.update_encoder_correction()` samples both encoders over a short measurement window and calculates:
+
+```text
+error = left_count - right_count
+```
+
+The current algorithm:
+
+- ignores small errors using a dead-band (`threshold=2`);
+- calculates a proportional target correction;
+- smooths the transition toward the target (`smoothing=0.35`);
+- limits correction to `±25`.
+
+The correction is intentionally **smoothed rather than accumulated indefinitely**. An earlier accumulating approach could grow to large correction values and create unstable PWM differences.
+
+The encoder implementation uses a GPIO falling-edge callback to count pulses.
+
+## Ultrasonic sensors
+
+Two HC-SR04 sensors are used for obstacle detection.
+
+`HCSR04.get_distance()` includes timeout handling and returns `None` if a valid echo is not received, preventing the program from waiting indefinitely.
+
+The current target demo behaviour is:
+
+```text
+Power on
+   ↓
+LED indicates ready
+   ↓
+Drive forward
+   ↓
+Measure distance
+   ↓
+Obstacle detected
+   ↓
+Stop motors
+   ↓
+LED indicates stop
+```
+
+## LED strip
+
+A 12-pixel WS2812 / NeoPixel strip is controlled through SPI using `pi5neo` on `/dev/spidev0.0`.
+
+It is used both for visual feedback and for simple LED test/animation patterns.
+
+## Safety
+
+Motor safety is kept explicit in the software:
+
+- motor duty cycles are clamped to `0..100`;
+- `KeyboardInterrupt` is the normal manual exit path;
+- the main program stops the motors and releases GPIO resources in a `finally` block;
+- ultrasonic measurement uses timeouts instead of blocking indefinitely.
+
+Any future control code should preserve these behaviours.
+
+## Running on Raspberry Pi
+
+The code targets Raspberry Pi hardware and imports `RPi.GPIO` and `pi5neo`, so the hardware-dependent programs are intended to run directly on the Pi.
 
 ```bash
-# On the Raspberry Pi
 pip install RPi.GPIO pi5neo
-
-# Drive forward with live encoder correction
 python3 my_robot.py
-
-# Stop with Ctrl-C — motors stop and GPIO is released automatically
 ```
 
-## Roadmap → v2
+Stop with **Ctrl+C**; the program should stop the motors and clean up GPIO.
 
-Version 1 proved the mechanics and control on a single board. **Version 2** splits
-the system into the right tool for each job:
+## Current development
 
-- **STM32F407 + FreeRTOS** — hard real-time low-level control (motors, PWM, encoders).
-- **Raspberry Pi + ROS** — high-level logic, navigation, and communication.
+Before Robot v1 is considered finished, the current plan is to:
 
-See **[Robot v2](https://github.com/mimo3a/Robot_v2)**.
+- complete and test ultrasonic obstacle detection;
+- integrate LED status indication;
+- verify the complete drive → detect obstacle → stop sequence;
+- tidy the internal wiring and enclosure;
+- make final project photos and a short demonstration video.
+
+Robot v1 is intentionally kept as a Raspberry Pi/Python prototype.
+
+## Future architecture — Robot v2
+
+The planned next architecture separates high-level Linux software from real-time control.
+
+### Raspberry Pi
+
+Responsible for:
+
+- high-level robot logic;
+- camera processing;
+- navigation and decision making;
+- communication with the low-level controller.
+
+### STM32F407 + FreeRTOS
+
+Responsible for:
+
+- PWM generation;
+- encoder counting;
+- motor speed control / PID;
+- heading control;
+- emergency-stop and other time-critical functions.
+
+An external IMU with a gyroscope can later provide body-rotation feedback. Encoders measure wheel rotation, while the gyroscope can measure actual robot rotation around the Z axis.
+
+The intended control concept is:
+
+```text
+Raspberry Pi
+high-level commands
+        ↓
+STM32F407 + FreeRTOS
+        ↓
+speed / heading control
+        ↓
+motors + encoders + IMU
+```
+
+Possible communication between Raspberry Pi and STM32 is UART or I²C, using commands such as:
+
+```text
+SET_SPEED left right
+FORWARD speed
+TURN angle speed
+STOP
+GET_STATUS
+```
+
+Possible telemetry from STM32:
+
+```text
+left_encoder
+right_encoder
+heading
+left_pwm
+right_pwm
+battery_voltage
+fault_state
+```
+
+This split allows Linux to handle complex high-level tasks while the microcontroller handles deterministic real-time motor control.
 
 ---
 
-*Written in Python for Raspberry Pi. Version 1 — archived and tagged `v1.0`.*
+*Robot v1 is an active Raspberry Pi/Python robotics prototype and portfolio project.*
