@@ -10,6 +10,20 @@ import time
 # Initialize a 12 LED NeoPixel strip on Raspberry Pi SPI bus 0.
 neo = Pi5Neo('/dev/spidev0.0', 12, 800)
 
+
+def send_spi_data_with_reset():
+    """Send LED data followed by a WS2812 reset/latch LOW interval.
+
+    On this Pi 5 SPI setup MOSI remains HIGH between transfers.  Appending
+    zero bytes makes the data line LOW for about 78 microseconds, allowing
+    WS2812 LEDs to latch the received frame.
+    """
+    neo.spi.xfer3(neo.raw_data + [0] * 64)
+
+
+# Override the library's transmitter without modifying site-packages.
+neo.send_spi_data = send_spi_data_with_reset
+
 colors = [
     (50, 0, 0),    # red
     (0, 50, 0),    # green
