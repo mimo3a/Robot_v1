@@ -158,10 +158,16 @@ Any future control code should preserve these behaviours.
 
 The code targets Raspberry Pi hardware and imports `RPi.GPIO` and `pi5neo`, so the hardware-dependent programs are intended to run directly on the Pi.
 
+On Raspberry Pi 5, the project uses the system-provided `RPi.GPIO` package together with `Pi5Neo` in a virtual environment:
+
 ```bash
-pip install RPi.GPIO pi5neo
-python3 my_robot.py
+python3 -m venv --system-site-packages .venv
+source .venv/bin/activate
+pip install Pi5Neo
+python my_robot.py
 ```
+
+SPI must be enabled for the WS2812 / NeoPixel strip.
 
 Stop with **Ctrl+C**; the program should stop the motors and clean up GPIO.
 
