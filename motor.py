@@ -35,10 +35,8 @@ class _SingleMotor:
         self.pwm2.ChangeDutyCycle(0)
 
     def cleanup(self):
-        # Set both channels to 0%. RPi.GPIO on Raspberry Pi 5 can emit
-        # lgpio PWM.__del__ errors when PWM.stop() is followed by GPIO.cleanup().
-        # GPIO.cleanup() releases the GPIO/PWM resources afterwards.
-        self.stop()
+        self.pwm1.stop()
+        self.pwm2.stop()
 
 
 
