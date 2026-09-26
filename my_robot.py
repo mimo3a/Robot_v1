@@ -1,3 +1,5 @@
+import time
+
 from motor import Motor
 from hc_sr04 import HCSR04
 from led_band import LedBand
@@ -43,7 +45,11 @@ try:
             motors.stop()
             leds.red()
             print("Obstacle detected - motors stopped.")
-            break
+
+            # Keep the stop state visible until the user ends the program.
+            # The motors remain stopped and the status LED stays red.
+            while True:
+                time.sleep(0.1)
 
         encoder_data = motors.update_encoder_correction(
             base_pwm,
