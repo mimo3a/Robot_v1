@@ -2,6 +2,10 @@
 
 A two-wheeled differential-drive robot controlled by a Raspberry Pi 5 in **Python**.
 
+<p align="center">
+  <img src="docs/images/12_37_53%20PM.jpg" alt="Robot v1 completed prototype" width="760">
+</p>
+
 The project is a practical robotics prototype for motor control, encoder feedback, ultrasonic obstacle sensing and addressable LEDs. It is also the first stage of a larger architecture that will later move real-time motor control to an STM32.
 
 > **Project status:** ✅ Prototype completed.
@@ -31,6 +35,13 @@ The project is a practical robotics prototype for motor control, encoder feedbac
 | Distance sensing | 2 × HC-SR04 ultrasonic sensors |
 | Lighting | 12 × WS2812 / NeoPixel LEDs |
 | Chassis | Differential drive: two driven wheels + rear caster |
+
+
+### Prototype photos
+
+| Electronics | Open chassis | Drivetrain |
+|---|---|---|
+| <img src="docs/images/12_36_09%20PM.jpg" alt="Robot v1 electronics" width="280"> | <img src="docs/images/12_36_31%20PM.jpg" alt="Robot v1 open chassis" width="280"> | <img src="docs/images/12_35_29%20PM.jpg" alt="Robot v1 drivetrain and encoders" width="280"> |
 
 ### GPIO pin map (BCM)
 
