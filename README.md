@@ -4,9 +4,9 @@ A two-wheeled differential-drive robot controlled by a Raspberry Pi 5 in **Pytho
 
 The project is a practical robotics prototype for motor control, encoder feedback, ultrasonic obstacle sensing and addressable LEDs. It is also the first stage of a larger architecture that will later move real-time motor control to an STM32.
 
-> **Project status:** 🚧 Work in progress.
+> **Project status:** ✅ Prototype completed.
 >
-> Current work focuses on finishing the Raspberry Pi prototype, validating obstacle detection and motor behaviour, cleaning the wiring, and preparing final photos/demo material.
+> Robot v1 validates the complete Raspberry Pi/Python control chain: motor PWM control, wheel-encoder feedback, ultrasonic obstacle detection and LED status indication. It serves as the baseline for the next embedded-software iterations.
 
 ---
 
@@ -79,23 +79,9 @@ PWM output is clamped to the safe range `0..100`.
 
 ### Straight-line calibration
 
-A typical calibration currently uses:
+A positive `steering_trim` increases left-motor PWM and decreases right-motor PWM. Calibration is performed experimentally on the floor while comparing the physical trajectory with encoder telemetry.
 
-```python
-base_pwm = 60
-steering_trim = 5
-```
-
-A positive `steering_trim` increases left-motor PWM and decreases right-motor PWM.
-
-Calibration is performed on the floor over repeated straight runs:
-
-1. Run the robot for approximately 2 seconds on a straight 2–3 m path.
-2. If it drifts left, increase `steering_trim` by about 1–2.
-3. If it drifts right, decrease it by about 1–2.
-4. Repeat several runs and evaluate the physical trajectory.
-
-**Important:** similar encoder counts do not necessarily mean that the robot physically travels straight. Mechanical differences, wheel slip and motor condition can still cause drift. Floor behaviour is therefore used together with encoder telemetry.
+**Important:** similar encoder counts do not necessarily mean that the robot physically travels straight. Mechanical differences, wheel slip and motor condition can still cause drift. Robot v1 demonstrated this limitation clearly: the prototype TT motors showed strongly different torque under load, beyond what software correction should compensate for.
 
 ## Encoder correction
 
@@ -122,7 +108,7 @@ Two HC-SR04 sensors are used for obstacle detection.
 
 `HCSR04.get_distance()` includes timeout handling and returns `None` if a valid echo is not received, preventing the program from waiting indefinitely.
 
-The current target demo behaviour is:
+The implemented obstacle-detection sequence is:
 
 ```text
 Power on
@@ -168,17 +154,24 @@ python3 my_robot.py
 
 Stop with **Ctrl+C**; the program should stop the motors and clean up GPIO.
 
-## Current development
+## Prototype outcome
 
-Before Robot v1 is considered finished, the current plan is to:
+Robot v1 was developed as a Raspberry Pi/Python proof of concept. The prototype successfully demonstrated:
 
-- complete and test ultrasonic obstacle detection;
-- integrate LED status indication;
-- verify the complete drive → detect obstacle → stop sequence;
-- tidy the internal wiring and enclosure;
-- make final project photos and a short demonstration video.
+- modular Python control of the drive hardware;
+- wheel-encoder acquisition and closed-loop speed correction experiments;
+- dual ultrasonic distance measurement;
+- automatic motor stop when an obstacle enters the configured safety distance;
+- addressable LED status indication;
+- safe shutdown and GPIO cleanup paths.
 
-Robot v1 is intentionally kept as a Raspberry Pi/Python prototype.
+The final floor tests also exposed a useful hardware limitation: the inexpensive TT motors differed substantially in available torque under load. Rather than compensating for a large mechanical mismatch in software, development of this hardware revision was stopped after the core control and sensing objectives were demonstrated.
+
+### Next iterations
+
+**Robot v1.2** is planned as a smaller embedded-control iteration using ESP32, C/C++, new encoder motors, Wi-Fi and improved closed-loop motor control.
+
+**Robot v2** moves to a split architecture with Raspberry Pi/Linux for high-level functions and STM32F407/FreeRTOS for deterministic low-level control.
 
 ## Future architecture — Robot v2
 
@@ -244,4 +237,4 @@ This split allows Linux to handle complex high-level tasks while the microcontro
 
 ---
 
-*Robot v1 is an active Raspberry Pi/Python robotics prototype and portfolio project.*
+*Robot v1 is a completed Raspberry Pi/Python proof-of-concept and portfolio project.*
